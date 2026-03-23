@@ -1,0 +1,7 @@
+{
+  "name": "TTTAP",
+  "description": "AI-powered car repair cost estimator using photos and videos. Professional assessment of damage with detailed cost breakdown.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
