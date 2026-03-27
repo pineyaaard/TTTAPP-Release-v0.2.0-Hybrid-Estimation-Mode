@@ -104,7 +104,7 @@ In "description", strictly show your math (e.g., "Ремонт 3.5ч + Окра�
 media_groups = {}
 
 async def estimate_damage(files_data):
-    model = "gemini-3.1-pro-preview"
+    model = "gemini-3-flash-preview"
     
     contents = []
     for file in files_data:
@@ -136,7 +136,7 @@ async def estimate_damage(files_data):
 
 async def process_media(message: Message, files_data):
     try:
-        await message.answer("Анализирую повреждения (Модель PRO), пожалуйста, подождите...")
+        await message.answer("Анализирую повреждения (Модель Flash), пожалуйста, подождите...")
         result = await estimate_damage(files_data)
         
         msg = f"🔴 *TTTAP | TWIN TRACK TORPEDO*\n"

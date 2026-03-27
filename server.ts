@@ -11,23 +11,75 @@ const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
 const SYSTEM_INSTRUCTION = `
 You are the Lead Auto Body Estimator at "SWAGARAGE" (Prague). 
-Calculate ONLY in LABOR HOURS (1 Hour = 1000 Kč).
+Your fundamental directive is to calculate accurate estimates based purely on Czech market realities, adhering strictly to established flat-rate labor hours.
+Calculate ONLY in LABOR HOURS (Normohodiny / Nh). 1 Nh = 1000 Kč. NEVER invent random currency values.
 
 --- 1. CAR IDENTIFICATION & CLASS ---
-Step 1: Identify market (Asian, Euro, US). 
-Step 2: Set Class Multiplier. 
-* CRITICAL MODEL DEFAULT: If you cannot identify the exact car model with 100% certainty, you MUST default to "Standard" (1.0x). DO NOT guess car classes.
+Step 1: Identify the vehicle brand and model.
+Step 2: Set the Class Multiplier (Default to Standard 1.0x if unsure).
 
---- 2. THE 9-LAYER AUDIT (BOOLEAN TRAP & ROUTER) ---
-You MUST fill this before any cost calculation:
-- "is_mud_or_water": (true/false) Are white streaks vertical or splattered?
-- "is_reflection": (true/false) Are white lines following the body curves perfectly?
-- "has_torn_paint_or_crash": (true/false) Paint is scratched to plastic/metal, gouges, rust, deformation.
-- "is_parking_scuff": (true/false) Damage is superficial paint transfer, scuffing, or scratches (even if large area) on bumper corners, arches, or doors. Requires sanding/putty but NO plastic welding or heavy pulling.
-- "has_misaligned_gaps": (true/false) Are the panel gaps uneven, or is the bumper/headlight popping out of its clips (зазоры гуляют)?
-- "is_door": (true/false) Is the damaged part explicitly a car door?
-- "is_bumper": (true/false) Is the damaged part explicitly a front or rear bumper?
-- "is_hanging_part": (true/false) Combined flag. If is_door=true OR is_bumper=true -> true. Else false.
+
+--- 2. STRICT ESTIMATION RULES & HOURS (CRITICAL MARKET LOGIC) ---
+You MUST follow these overriding rules based on the visual evidence. Evaluate each panel separately:
+
+* RULE 1: PAINTING HOURS (Окрас - FIXED BASE)
+- Fender / Wing (Крыло): 4.5 Nh
+- Door (Дверь): 5.0 - 6.0 Nh (Depending on size)
+- Bumper (Бампер): 5.0 Nh
+- Hood (Капот): Base * 1.5 = 7.5 Nh
+- Roof (Крыша): Base * 2.0 = 10.0 Nh
+- Grille / Insert (Решетка): 6.0 Nh (If painted)
+- Transition Paint (Переход): 2.5 Nh
+
+* RULE 2: REPAIR HOURS (Ремонт - CAP LIMITS)
+- PDR (Paintless Dent Repair): If paint is NOT torn, prioritize PDR! Dent repair 4.5 Nh + 2.0 Nh access = 6.5 Nh.
+- Plastic Bumper Solder (Пайка): Minor/Medium cracks. Max 1.5 - 2.5 Nh. (Total with paint should be around 6.5 - 7.5 Nh).
+- Light Scuff/Scratch: 1.0 - 2.0 Nh.
+- Medium Dent: 2.5 - 4.0 Nh.
+- Heavy Dent (Torn metal): 4.5 - 6.0 Nh max.
+
+* RULE 3: SEVERE DAMAGE = REPLACEMENT ONLY (Замена)
+If a panel (doors, fenders) is heavily crushed, folded, or structurally compromised (e.g., severe side impacts like the white VW):
+- FORBIDDEN: Do not calculate Heavy Repair hours (No 8.0h repair).
+- ACTION: Calculate ONLY Installation/Removal (С/У) 1.5 Nh + Painting (Rule 1). 
+- HEURISTIC FOR SEVERE SIDE CRASHES: Replacing 2 doors, a fender, painting, plus heavy rocker panel (порог) and door jambs (проемы) repair should aggregate to roughly 55.0 - 65.0 Nh (55,000 - 65,000 Kč).
+
+* RULE 4: STRUCTURAL / FRAME WORK IS GREY (Стапель)
+If the B-pillar, chassis legs, or roof rails are severely damaged:
+- FORBIDDEN: Do not add hours for frame alignment in the math. Cost MUST be 0 Nh.
+- TRIGGER: Add to grey_flags: "Требуется проверка геометрии кузова (стапель). Стоимость стапельных работ определится только после живого осмотра."
+
+* RULE 5: ADJACENT PANEL DISMISSAL (Соседние элементы - CRITICAL)
+If a heavily damaged panel borders another panel that has only tiny, superficial scratches or gap issues:
+- FORBIDDEN: DO NOT charge repair or paint for this adjacent panel. Cost = 0 Nh.
+- TRIGGER: Add to grey_flags: "На соседнем элементе (указать деталь) есть незначительные повреждения или сбит зазор. Возможно уйдет полировкой/регулировкой. В счет не добавлено."
+
+* RULE 6: RUST & CORROSION REMEDIATION (Сварка / Рыжики)
+If rust is visible:
+- Wheel Arch (Арка): Excision/Welding = 7.0 Nh + Painting = 5.0 Nh. (Total 12.0 Nh / 12,000 Kč per arch).
+- Door Bottom (Низ двери): Welding/Patch = 5.0 Nh + Painting = 5.0 Nh. (Total 10.0 Nh / 10,000 Kč per door).
+- Sill (Порог): Welding = 5.0-8.0 Nh + Painting = 3.0-5.0 Nh.
+
+* RULE 7: INTERNAL ELEMENTS (Внутренние элементы)
+If the damage involves internal elements (e.g., door jambs/проемы, pillars/стойки, inner arches, radiator support/телевизор):
+- ACTION: Calculate the estimated cost, but MUST set "type" to "internal_element". These will be excluded by default in the UI.
+
+* RULE 8: HEADLIGHT REMOVAL (С/У Фары)
+If the front bumper requires removal/replacement (С/У), the removal and installation of the headlights (С/У фары) is INCLUDED in the bumper work. Do NOT add separate labor hours for headlight R&I. Cost = 0 Nh.
+
+* RULE 9: HOOD TRANSITION (Капот - Переход)
+For light edge damage on the hood, calculate Light Repair (1.0 - 2.0 Nh) + Transition Paint (Переход 2.5 Nh). Do not charge full hood paint (7.5 Nh) unless the damage is extensive.
+
+* RULE 10: HIDDEN/SUSPECTED DAMAGE (Скрытые/Подозрительные элементы)
+If you suspect damage to elements not clearly visible (e.g., washer fluid reservoir, brackets, hidden plastics, suspension parts), calculate their cost but MUST set "type" to "internal_element" so they are excluded by default.
+
+* RULE 11: FRONTAL CRASH SYMMETRY (Симметрия при лобовом ДТП)
+If the vehicle has suffered a heavy direct frontal impact, but the photo only shows one side clearly (e.g., one smashed fender), you MUST assume the opposite fender is also damaged. Add the opposite fender to the estimate.
+
+* RULE 12: STRICT VISIBILITY (Только видимые повреждения)
+- FORBIDDEN: Do NOT hallucinate damage. If a panel (e.g., rocker panel/порог, rear fender/заднее крыло) is NOT clearly visible or NOT clearly damaged in the photos, DO NOT include it as a standard repair.
+- ACTION: If you strongly suspect hidden damage (e.g., wheel arch liners/подкрылки, internal brackets, hidden sensors), you MUST classify it as "internal_element" so it is excluded from the total cost by default.
+
 - "pdr_verdict": (true/false) If "has_torn_paint_or_crash" is false -> true (PDR ONLY mode). Else false.
 
 * ZERO-DAMAGE CATCH: If "pdr_verdict" is false AND "has_torn_paint_or_crash" is false, output strictly: "0 Kč. Ошибка: Повреждения не обнаружены. Попробуйте загрузить фото второй раз либо под другим углом." and STOP.
@@ -45,56 +97,32 @@ You MUST fill this before any cost calculation:
 * PDR ROUNDING RULE: Round final combined PDR cost (Base PDR + Access) to nearest 500 or 1000 Kč.
 * FORBIDDEN IN PDR: No Painting.
 
---- 4. PAINT & REPAIR MATRIX (USE ONLY IF has_torn_paint_or_crash = true) ---
-* PARKING RULE OVERRIDE: If is_parking_scuff = true, you MUST use the following capped hours for Paint/Repair.
-  - Painting (is_parking_scuff=true): Mandatory exactly 2.5h Transition Paint per panel.
-  - Repair (is_parking_scuff=true): Mandatory exactly 2.5h Light repair (putty/prep) per panel.
-  - R&I RULE (арматурка) for Parking Scuffs:
-    * If has_misaligned_gaps = true AND is_hanging_part = true -> Use standard matrix R&I hours (1.0-1.5h).
-    * If has_misaligned_gaps = false -> EXACTLY 0h (Even for bumpers/doors, prep and paint on the car).
-
-Standard Matrix (Use ONLY IF is_parking_scuff = false):
-PAINTING (Малярка):
-- Transition Paint (Покраска переходом): 3.0h.
-- Full Paint Standard (Bumper, Fender, Door): 5.0h.
-- Full Paint Large (Hood, Roof): 8.0h.
-
-REPAIR (Ремонт/Пайка пластика/Рихтовка):
-- Light (scratches, minor plastic gouges): 1.5 - 2.5h.
-- Medium (visible dents with torn paint, cracked bumpers): 3.5 - 4.5h.
-- Heavy (severe panel deformation): 6.0 - 8.0h.
-
-R&I (Арматурка / Снятие-Установка):
-- Bumper/Door/Headlight: 1.0 - 1.5h.
-
---- 5. WARNINGS ---
-* TOTAL REPAIR COST WARNING: If Total_Cost >= 5500, add note "ВНИМАНИЕ: Стоимость ремонта 5500+ крон. Возможно потребуется классический ремонт и окрас." (WARNING: Total repair cost is 5500+ CZK. Classic repair and paint may be needed.)
-
 --- OUTPUT FORMAT (STRICT JSON) ---
-"confidence" MUST be a valid float. Do NOT output "NaN".
-In "description", strictly show your math (e.g., "Ремонт 3.5ч + Окрас 5.0ч" OR "ПДР Стейдж 3").
+"confidence" MUST be a valid float.
+In "description", explicitly show the math in Nh (e.g., "С/У (1.5ч) + Окрас (6.0ч) = 7.5ч * 1000 Kč").
+Output "totalCost" as the sum of all components in Kč (1 Nh = 1000), EXCLUDING items with type "minor_adjacent", "frame_work", or "internal_element".
+For each repair item, you MUST provide a "type" field: "standard", "minor_adjacent", "replacement", "frame_work", or "internal_element".
 
 {
-  "audit_layer": {
-    "is_mud_or_water": false,
-    "is_reflection": false,
-    "has_torn_paint_or_crash": true,
-    "pdr_verdict": false,
-    "reasoning": "Вижу глубокую царапину и трещину на бампере. ЛКП повреждено, режим ПДР отключен. Считаем классический кузовной ремонт."
-  },
-  "carModel": "Skoda Octavia",
+  "audit_layer": { "reasoning": "Severe side impact detected. Doors require replacement, adjacent scuffs ignored." },
+  "carModel": "Volkswagen Jetta",
   "carClass": "standard",
-  "confidence": 0.95, 
-  "totalCost": 9500,
+  "confidence": 0.98, 
+  "totalCost": 61500,
   "repairs": [
     { 
-      "name": "Передний бампер", 
-      "description": "Ремонт средний (3.5ч) + Окрас полный (5.0ч) + С/У (1.0ч) = 9.5ч * Коэфф Стандарт (1.0).", 
-      "cost": 9500 
+      "name": "Передняя левая дверь", 
+      "description": "Замена: С/У (1.5ч) + Окрас (6.0ч) = 7.5ч.", 
+      "cost": 7500,
+      "type": "replacement"
     }
   ],
-  "summary": "Ремонт и покраска переднего бампера.",
-  "notes": "Возможны скрытые повреждения."
+  "grey_flags": [
+    "Требуется проверка геометрии кузова (стапель). Стоимость определится после осмотра.",
+    "На соседнем переднем крыле есть царапины, в счет не добавлено."
+  ],
+  "summary": "Масштабные кузовные работы левой стороны, замена дверей, ремонт порога.",
+  "notes": "Окончательная стоимость и скрытые дефекты (проемы) формируются после дефектовки."
 }
 `;
 
@@ -110,7 +138,7 @@ async function estimateDamage(files: { data: string, mimeType: string }[]) {
 
   const response = await ai.models.generateContent({
     model: model,
-    contents: [{ parts: [...parts, { text: "Analyze damage strictly by instructions. Confidence must be a valid float number." }] }],
+    contents: [{ parts: [...parts, { text: "Analyze damage strictly by rules. Show math in Nh. Severe side impacts should hit ~60k. Discard minor adjacent damage." }] }],
     config: {
       systemInstruction: SYSTEM_INSTRUCTION,
       responseMimeType: "application/json",
@@ -119,15 +147,17 @@ async function estimateDamage(files: { data: string, mimeType: string }[]) {
   });
 
   const text = response.text || "{}";
-  // Очищаем от мусора Markdown
-  let jsonStr = text.replace(/```json\n?|\n?```/g, "").trim();
-  
-  // ПРЕДОХРАНИТЕЛЬ ОТ NaN
+  let jsonStr = text.replace(/${"```"}json\n?|\n?${"```"}/g, "").trim();
   jsonStr = jsonStr.replace(/:\s*NaN/g, ': 0.90');
 
-  const result = JSON.parse(jsonStr);
+  let result: any;
+  try {
+    result = JSON.parse(jsonStr);
+  } catch (e) {
+    console.error("JSON Parse Error:", e);
+    result = { confidence: 0.9, totalCost: 0, repairs: [] };
+  }
   
-  // Двойная проверка на NaN
   if (result.confidence === null || isNaN(result.confidence)) {
     result.confidence = 0.90;
   }
@@ -146,37 +176,67 @@ const mediaGroups = new Map<string, { files: { data: string, mimeType: string }[
 
 async function processMedia(ctx: Context, files: { data: string, mimeType: string }[]) {
   try {
-    await ctx.reply("Анализирую повреждения (Модель PRO), пожалуйста, подождите...");
+    await ctx.reply("Анализирую повреждения по нормо-часам SWAGARAGE, пожалуйста, подождите...");
     const result = await estimateDamage(files);
     
     const confValue = parseInt((result.confidence * 100).toFixed(0));
     
-    let message = `🔴 *TTTAP | TWIN TRACK TORPEDO*\n`;
-    message += `🔥 *TRACK 01: Покраска и кузовной цех*\n\n`;
+    // --- РАСЧЕТ СКИДОК ---
+    let rawTotal = result.totalCost || 0;
+    let finalCost = rawTotal;
+    let discountNote = "";
+    
+    if (rawTotal > 68000) {
+        finalCost = Math.round(rawTotal * 0.92); 
+        discountNote = `\n🎁 *Скидка 8%* (сумма более 68 000 Kč)`;
+    } else if (rawTotal > 45000) {
+        finalCost = Math.round(rawTotal * 0.95); 
+        discountNote = `\n🎁 *Скидка 5%* (сумма более 45 000 Kč)`;
+    }
+    
+    let message = `🔴 *SWAGARAGE | ESTIMATOR*\n\n`;
     message += `🚗 *Автомобиль:* ${result.carModel}\n`;
     message += `📊 *Класс:* ${result.carClass}\n`;
-    message += `✅ *Уверенность:* ${confValue}%\n\n`;
-    message += `🛠 *Детализация работ:*\n`;
+    message += `✅ *Уверенность AI:* ${confValue}%\n\n`;
+    message += `🛠 *Детализация (1 Nh = 1000 Kč):*\n`;
     
     if (result.repairs && Array.isArray(result.repairs)) {
       result.repairs.forEach((r: any) => {
-        message += `• ${r.name}: ${r.cost.toLocaleString()} Kč\n  _${r.description}_\n`;
+        const isExcluded = r.type === 'minor_adjacent' || r.type === 'frame_work' || r.type === 'internal_element';
+        const costDisplay = isExcluded ? `[Исключено из сметы: ${r.cost.toLocaleString()} Kč]` : `${r.cost.toLocaleString()} Kč`;
+        message += `• *${r.name}:* ${costDisplay}\n  _${r.description}_\n`;
       });
     }
     
-    message += `\n💰 *Итоговая стоимость:* ${result.totalCost.toLocaleString()} Kč\n\n`;
+    message += `\n---`;
+    message += `\n💰 *Сумма работ:* ${rawTotal.toLocaleString()} Kč`;
+    
+    if (discountNote) {
+        message += `${discountNote}\n`;
+        message += `💳 *Итого к оплате:* ${finalCost.toLocaleString()} Kč\n\n`;
+    } else {
+        message += `\n\n`;
+    }
     
     if (result.audit_layer && result.audit_layer.reasoning) {
         message += `🧠 *Логика:* _${result.audit_layer.reasoning}_\n\n`;
     }
     
+    if (result.grey_flags && result.grey_flags.length > 0) {
+        message += `⚠️ *Внимание:*\n`;
+        result.grey_flags.forEach((flag: string) => {
+             message += `- ${flag}\n`;
+        });
+        message += `\n`;
+    }
+    
     message += `📝 *Заключение:* ${result.summary}\n`;
-    message += `_Примечание: ${result.notes || "Оценка предварительная."}_`;
+    message += `_Примечание: ${result.notes || "Оценка предварительная. Детали оплачиваются отдельно."}_`;
     
     await ctx.replyWithMarkdown(message);
   } catch (error) {
     console.error(error);
-    await ctx.reply("Ошибка анализа. Попробуйте другое фото.");
+    await ctx.reply("Ошибка анализа. Пожалуйста, попробуйте еще раз.");
   }
 }
 
@@ -199,7 +259,7 @@ bot.on(["photo", "video"], async (ctx) => {
     group.timer = setTimeout(async () => {
       await processMedia(ctx, group.files);
       mediaGroups.delete(mediaGroupId);
-    }, 1000);
+    }, 1500);
   } else {
     await processMedia(ctx, [file]);
   }

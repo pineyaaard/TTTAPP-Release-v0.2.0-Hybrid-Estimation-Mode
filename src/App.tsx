@@ -20,7 +20,8 @@ export default function App() {
   const [files, setFiles] = useState<File[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [result, setResult] = useState<EstimationResult | null>(null);
-  const [activeRepairs, setActiveRepairs] = useState<Record<number, boolean>>({});
+  const [repairOptions, setRepairOptions] = useState<Record<number, 'default' | 'replace_only' | 'replace_and_paint' | 'polishing_only' | 'none'>>({});
+  const [globalPolishing, setGlobalPolishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -46,6 +47,7 @@ export default function App() {
     setIsProcessing(true);
     setError(null);
     setResult(null);
+    setGlobalPolishing(false);
 
     try {
       const fileData = await Promise.all(files.map(async (file) => {
@@ -61,10 +63,17 @@ export default function App() {
         estimation.repairs = [];
       }
       setResult(estimation);
-      // Initialize all repairs as active
-      const initialActive: Record<number, boolean> = {};
-      estimation.repairs.forEach((_: any, idx: number) => { initialActive[idx] = true; });
-      setActiveRepairs(initialActive);
+      
+      // Initialize options based on repair type
+      const initialOptions: Record<number, 'default' | 'replace_only' | 'replace_and_paint' | 'polishing_only' | 'none'> = {};
+      estimation.repairs.forEach((repair: RepairItem, idx: number) => { 
+        if (repair.type === 'minor_adjacent' || repair.type === 'frame_work' || repair.type === 'internal_element') {
+          initialOptions[idx] = 'none';
+        } else {
+          initialOptions[idx] = 'default';
+        }
+      });
+      setRepairOptions(initialOptions);
     } catch (err: any) {
       setError(err.message || 'Произошла ошибка при анализе');
     } finally {
@@ -72,15 +81,22 @@ export default function App() {
     }
   };
 
-  const toggleRepair = (idx: number) => {
-    setActiveRepairs(prev => ({ ...prev, [idx]: !prev[idx] }));
-  };
-
   const calculateTotal = () => {
     if (!result || !result.repairs) return 0;
-    return result.repairs.reduce((acc, repair, idx) => {
-      return activeRepairs[idx] ? acc + repair.cost : acc;
+    let total = result.repairs.reduce((acc, repair, idx) => {
+      const option = repairOptions[idx];
+      if (option === 'default') return acc + repair.cost;
+      if (option === 'replace_only') return acc + 1000;
+      if (option === 'replace_and_paint') return acc + 6000;
+      if (option === 'polishing_only') return acc + 500;
+      return acc;
     }, 0);
+    
+    if (globalPolishing) {
+      total += 7000; // Average price for full car polishing
+    }
+    
+    return total;
   };
 
   const isVideo = (file: File) => file.type.startsWith('video/');
@@ -247,32 +263,110 @@ export default function App() {
                       <Wrench className="w-5 h-5 text-rose-400" />
                       <h3 className="text-lg font-semibold">Детализация работ</h3>
                     </div>
-                    {result.repairs && result.repairs.map((repair, idx) => (
-                      <div 
-                        key={idx} 
-                        onClick={() => toggleRepair(idx)}
-                        className={`glass-panel p-4 flex justify-between items-start gap-4 cursor-pointer transition-all ${
-                          activeRepairs[idx] ? 'border-rose-500/30 bg-rose-500/5' : 'opacity-40 grayscale border-zinc-800'
-                        }`}
-                      >
-                        <div className="flex gap-3">
-                          <div className={`mt-1 w-5 h-5 rounded border flex items-center justify-center transition-colors ${
-                            activeRepairs[idx] ? 'bg-rose-500 border-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]' : 'border-zinc-600'
-                          }`}>
-                            {activeRepairs[idx] && <CheckCircle2 className="w-3 h-3 text-white" />}
-                          </div>
-                          <div>
-                            <h4 className="font-bold text-zinc-100">{repair.name}</h4>
-                            <p className="text-sm text-zinc-400 mt-1">{repair.description}</p>
-                          </div>
-                        </div>
-                        <div className={`font-mono font-bold whitespace-nowrap ${
-                          activeRepairs[idx] ? 'text-rose-400' : 'text-zinc-600'
+                    {result.repairs && result.repairs.map((repair, idx) => {
+                      const option = repairOptions[idx];
+                      const isActive = option !== 'none';
+                      const isGrayedOut = repair.type === 'minor_adjacent' || repair.type === 'frame_work' || repair.type === 'internal_element';
+
+                      return (
+                        <div key={idx} className={`glass-panel p-4 flex flex-col gap-4 transition-all ${
+                          isActive ? 'border-rose-500/30 bg-rose-500/5' : 'opacity-60 grayscale border-zinc-800'
                         }`}>
-                          + {repair.cost.toLocaleString()} Kč
+                          <div className="flex justify-between items-start gap-4 cursor-pointer" onClick={() => {
+                            if (isGrayedOut && option === 'none') {
+                              setRepairOptions(prev => ({ ...prev, [idx]: 'default' }));
+                            } else {
+                              setRepairOptions(prev => ({ ...prev, [idx]: option === 'none' ? 'default' : 'none' }));
+                            }
+                          }}>
+                            <div className="flex gap-3">
+                              <div className={`mt-1 w-5 h-5 rounded border flex items-center justify-center transition-colors ${
+                                isActive ? 'bg-rose-500 border-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]' : 'border-zinc-600'
+                              }`}>
+                                {isActive && <CheckCircle2 className="w-3 h-3 text-white" />}
+                              </div>
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <h4 className="font-bold text-zinc-100">{repair.name}</h4>
+                                  {repair.type === 'replacement' && (
+                                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/20 text-red-400 border border-red-500/20">ЗАМЕНА</span>
+                                  )}
+                                  {repair.type === 'frame_work' && (
+                                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/20">СТАПЕЛЬ</span>
+                                  )}
+                                  {repair.type === 'minor_adjacent' && (
+                                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-zinc-500/20 text-zinc-400 border border-zinc-500/20">СМЕЖНАЯ ДЕТАЛЬ</span>
+                                  )}
+                                  {repair.type === 'internal_element' && (
+                                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-zinc-500/20 text-zinc-400 border border-zinc-500/20">ВНУТРЕННИЙ ЭЛЕМЕНТ</span>
+                                  )}
+                                </div>
+                                <p className="text-sm text-zinc-400 mt-1">{repair.description}</p>
+                              </div>
+                            </div>
+                            <div className={`font-mono font-bold whitespace-nowrap ${
+                              isActive ? 'text-rose-400' : 'text-zinc-600'
+                            }`}>
+                              + {
+                                option === 'replace_only' ? '1 000' :
+                                option === 'replace_and_paint' ? '6 000' :
+                                option === 'polishing_only' ? '500' :
+                                repair.cost.toLocaleString()
+                              } Kč
+                            </div>
+                          </div>
+
+                          {/* Additional Options */}
+                          {isActive && repair.type !== 'frame_work' && repair.type !== 'internal_element' && (
+                            <div className="flex flex-wrap gap-2 pl-8 pt-2 border-t border-zinc-800/50">
+                              {[
+                                { id: 'replace_and_paint', label: 'Замена/снятие + покраска (6 000 Kč)', cost: 6000, activeClass: 'bg-purple-500 text-white' },
+                                ...[
+                                  { id: 'default', label: `Стандартный ремонт (${repair.cost.toLocaleString()} Kč)`, cost: repair.cost, activeClass: 'bg-rose-500 text-white' },
+                                  { id: 'replace_only', label: 'Замена (1 000 Kč)', cost: 1000, activeClass: 'bg-amber-500 text-white' },
+                                  { id: 'polishing_only', label: 'Только полировка (500 Kč)', cost: 500, activeClass: 'bg-blue-500 text-white' }
+                                ].sort((a, b) => b.cost - a.cost)
+                              ].map(opt => (
+                                <button
+                                  key={opt.id}
+                                  onClick={(e) => { e.stopPropagation(); setRepairOptions(prev => ({ ...prev, [idx]: opt.id as any })); }}
+                                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                                    option === opt.id ? opt.activeClass : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                                  }`}
+                                >
+                                  {opt.label}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+
+                    {/* Global Polishing Toggle */}
+                    <div 
+                      onClick={() => setGlobalPolishing(!globalPolishing)}
+                      className={`glass-panel p-4 flex justify-between items-center cursor-pointer transition-all mt-6 ${
+                        globalPolishing ? 'border-blue-500/50 bg-blue-500/10' : 'border-zinc-800'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
+                          globalPolishing ? 'bg-blue-500 border-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]' : 'border-zinc-600'
+                        }`}>
+                          {globalPolishing && <CheckCircle2 className="w-3 h-3 text-white" />}
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-zinc-100">Полная полировка кузова</h4>
+                          <p className="text-xs text-zinc-400">Освежить ЛКП всего автомобиля (от 6000 до 8000 крон)</p>
                         </div>
                       </div>
-                    ))}
+                      <div className={`font-mono font-bold whitespace-nowrap ${
+                        globalPolishing ? 'text-blue-400' : 'text-zinc-600'
+                      }`}>
+                        + 7,000 Kč
+                      </div>
+                    </div>
                   </div>
                   
                   <div className="space-y-4">
