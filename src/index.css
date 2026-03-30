@@ -1,6 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
 
+@variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
@@ -8,14 +10,45 @@
 
 @layer base {
   body {
-    @apply bg-zinc-950 text-zinc-100 font-sans antialiased;
+    @apply bg-zinc-50 text-zinc-900 font-sans antialiased transition-colors duration-300;
+    background-image: 
+      radial-gradient(circle at 2px 2px, rgba(0,0,0,0.05) 1px, transparent 0);
+    background-size: 40px 40px;
+  }
+  
+  .dark body {
+    @apply bg-zinc-950 text-zinc-100;
+    background-image: 
+      radial-gradient(circle at 2px 2px, rgba(255,255,255,0.05) 1px, transparent 0);
   }
 }
 
 .glass-panel {
-  @apply bg-zinc-900/50 backdrop-blur-md border border-zinc-800 rounded-2xl;
+  @apply bg-white/60 dark:bg-zinc-900/40 backdrop-blur-xl border border-zinc-200/50 dark:border-zinc-800/50 rounded-2xl shadow-xl dark:shadow-2xl transition-colors duration-300;
+}
+
+.technical-border {
+  @apply border border-dashed border-zinc-300/50 dark:border-zinc-700/50;
+}
+
+.accent-glow {
+  @apply shadow-[0_0_20px_rgba(244,63,94,0.1)] dark:shadow-[0_0_20px_rgba(244,63,94,0.2)];
 }
 
 .gradient-text {
-  @apply bg-clip-text text-transparent bg-gradient-to-r from-rose-400 to-red-600 drop-shadow-[0_0_15px_rgba(244,63,94,0.4)];
+  @apply bg-clip-text text-transparent bg-gradient-to-br from-zinc-900 via-zinc-700 to-zinc-500 dark:from-white dark:via-zinc-200 dark:to-zinc-500;
+}
+
+.accent-text {
+  @apply text-rose-600 dark:text-rose-500 drop-shadow-[0_0_8px_rgba(244,63,94,0.2)] dark:drop-shadow-[0_0_8px_rgba(244,63,94,0.4)];
+}
+
+@keyframes scan {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+.scan-line {
+  @apply absolute inset-0 w-full h-1 bg-rose-500/20 blur-sm pointer-events-none;
+  animation: scan 3s linear infinite;
 }

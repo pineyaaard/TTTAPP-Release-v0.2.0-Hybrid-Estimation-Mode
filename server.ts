@@ -1,13 +1,46 @@
 import express from "express";
+import "dotenv/config";
 import { createServer as createViteServer } from "vite";
 import path from "path";
+import fs from "fs";
+import os from "os";
 import { Telegraf, Context } from "telegraf";
 import axios from "axios";
+import rateLimit from "express-rate-limit";
+import cors from "cors";
+import { initializeApp } from "firebase/app";
+import { getFirestore, collection, addDoc } from "firebase/firestore";
 import { GoogleGenAI } from "@google/genai";
 
+let db: any = null;
+try {
+  const firebaseConfig = JSON.parse(fs.readFileSync(path.join(process.cwd(), "firebase-applet-config.json"), "utf8"));
+  const app = initializeApp(firebaseConfig);
+  db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+} catch (e) {
+  console.warn("Firebase initialization failed in backend. Telegram bot CRM features may not work.");
+}
+
+// --- Rate Limiting ---
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many requests, please try again later." }
+});
+
+const vinLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 20, // Limit each IP to 20 VIN lookups per hour
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many VIN lookups, please try again later." }
+});
+
 // --- Gemini Setup ---
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
-const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+// API Key is loaded dynamically per request to support AI Studio environment
+
 
 const SYSTEM_INSTRUCTION = `
 You are the Lead Auto Body Estimator at "SWAGARAGE" (Prague). 
@@ -127,147 +160,275 @@ For each repair item, you MUST provide a "type" field: "standard", "minor_adjace
 `;
 
 async function estimateDamage(files: { data: string, mimeType: string }[]) {
-  const model = "gemini-3.1-pro-preview"; 
+  const model = "gemini-3-flash-preview"; 
   
-  const parts = files.map((file) => ({
-    inlineData: {
-      data: file.data,
-      mimeType: file.mimeType
-    }
-  }));
+  const uploadedFiles: string[] = [];
+  const parts: any[] = [];
 
-  const response = await ai.models.generateContent({
-    model: model,
-    contents: [{ parts: [...parts, { text: "Analyze damage strictly by rules. Show math in Nh. Severe side impacts should hit ~60k. Discard minor adjacent damage." }] }],
-    config: {
-      systemInstruction: SYSTEM_INSTRUCTION,
-      responseMimeType: "application/json",
-      temperature: 0.1
-    }
-  });
-
-  const text = response.text || "{}";
-  let jsonStr = text.replace(/${"```"}json\n?|\n?${"```"}/g, "").trim();
-  jsonStr = jsonStr.replace(/:\s*NaN/g, ': 0.90');
-
-  let result: any;
   try {
-    result = JSON.parse(jsonStr);
-  } catch (e) {
-    console.error("JSON Parse Error:", e);
-    result = { confidence: 0.9, totalCost: 0, repairs: [] };
-  }
-  
-  if (result.confidence === null || isNaN(result.confidence)) {
-    result.confidence = 0.90;
-  }
+    for (const file of files) {
+      const isVideo = file.mimeType.startsWith("video/");
+      const isLarge = file.data.length > 5 * 1024 * 1024; // ~5MB base64
 
-  if (!result.repairs || !Array.isArray(result.repairs)) {
-    result.repairs = [];
-  }
-
-  return result;
-}
-
-// --- Telegram Bot Setup ---
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
-const bot = new Telegraf(BOT_TOKEN);
-const mediaGroups = new Map<string, { files: { data: string, mimeType: string }[], timer: NodeJS.Timeout }>();
-
-async function processMedia(ctx: Context, files: { data: string, mimeType: string }[]) {
-  try {
-    await ctx.reply("Анализирую повреждения по нормо-часам SWAGARAGE, пожалуйста, подождите...");
-    const result = await estimateDamage(files);
-    
-    const confValue = parseInt((result.confidence * 100).toFixed(0));
-    
-    // --- РАСЧЕТ СКИДОК ---
-    let rawTotal = result.totalCost || 0;
-    let finalCost = rawTotal;
-    let discountNote = "";
-    
-    if (rawTotal > 68000) {
-        finalCost = Math.round(rawTotal * 0.92); 
-        discountNote = `\n🎁 *Скидка 8%* (сумма более 68 000 Kč)`;
-    } else if (rawTotal > 45000) {
-        finalCost = Math.round(rawTotal * 0.95); 
-        discountNote = `\n🎁 *Скидка 5%* (сумма более 45 000 Kč)`;
-    }
-    
-    let message = `🔴 *SWAGARAGE | ESTIMATOR*\n\n`;
-    message += `🚗 *Автомобиль:* ${result.carModel}\n`;
-    message += `📊 *Класс:* ${result.carClass}\n`;
-    message += `✅ *Уверенность AI:* ${confValue}%\n\n`;
-    message += `🛠 *Детализация (1 Nh = 1000 Kč):*\n`;
-    
-    if (result.repairs && Array.isArray(result.repairs)) {
-      result.repairs.forEach((r: any) => {
-        const isExcluded = r.type === 'minor_adjacent' || r.type === 'frame_work' || r.type === 'internal_element';
-        const costDisplay = isExcluded ? `[Исключено из сметы: ${r.cost.toLocaleString()} Kč]` : `${r.cost.toLocaleString()} Kč`;
-        message += `• *${r.name}:* ${costDisplay}\n  _${r.description}_\n`;
-      });
-    }
-    
-    message += `\n---`;
-    message += `\n💰 *Сумма работ:* ${rawTotal.toLocaleString()} Kč`;
-    
-    if (discountNote) {
-        message += `${discountNote}\n`;
-        message += `💳 *Итого к оплате:* ${finalCost.toLocaleString()} Kč\n\n`;
-    } else {
-        message += `\n\n`;
-    }
-    
-    if (result.audit_layer && result.audit_layer.reasoning) {
-        message += `🧠 *Логика:* _${result.audit_layer.reasoning}_\n\n`;
-    }
-    
-    if (result.grey_flags && result.grey_flags.length > 0) {
-        message += `⚠️ *Внимание:*\n`;
-        result.grey_flags.forEach((flag: string) => {
-             message += `- ${flag}\n`;
+      if (isVideo || isLarge) {
+        // Use File API for videos or large images
+        const tempFilePath = path.join(os.tmpdir(), `upload_${Date.now()}_${Math.random().toString(36).substring(7)}`);
+        fs.writeFileSync(tempFilePath, Buffer.from(file.data, 'base64'));
+        
+        try {
+          const currentApiKey = process.env.GEMINI_API_KEY || process.env.API_KEY || "";
+          const localAi = new GoogleGenAI({ apiKey: currentApiKey });
+          const uploadResponse = await localAi.files.upload({
+            file: tempFilePath,
+            config: {
+              mimeType: file.mimeType,
+            }
+          });
+          
+          // Poll until the file is ACTIVE (especially for videos)
+          let fileState = uploadResponse.state;
+          let attempts = 0;
+          while (fileState === "PROCESSING" && attempts < 30) {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            try {
+              const fileInfo = await localAi.files.get({ name: uploadResponse.name });
+              fileState = fileInfo.state;
+            } catch (e) {
+              console.error("Error polling file status:", e);
+              break;
+            }
+            attempts++;
+          }
+          
+          if (fileState === "FAILED") {
+             throw new Error(`File processing failed for ${uploadResponse.name}`);
+          }
+          
+          uploadedFiles.push(uploadResponse.name);
+          parts.push({
+            fileData: {
+              fileUri: uploadResponse.uri,
+              mimeType: file.mimeType
+            }
+          });
+        } finally {
+          if (fs.existsSync(tempFilePath)) {
+            fs.unlinkSync(tempFilePath);
+          }
+        }
+      } else {
+        // Use inlineData for small images
+        parts.push({
+          inlineData: {
+            data: file.data,
+            mimeType: file.mimeType
+          }
         });
-        message += `\n`;
+      }
+    }
+
+    const currentApiKey = process.env.GEMINI_API_KEY || process.env.API_KEY || "";
+    const localAi = new GoogleGenAI({ apiKey: currentApiKey });
+
+    const response = await localAi.models.generateContent({
+      model: model,
+      contents: [{ parts: [...parts, { text: "Analyze damage strictly by rules. Show math in Nh. Severe side impacts should hit ~60k. Discard minor adjacent damage." }] }],
+      config: {
+        systemInstruction: SYSTEM_INSTRUCTION,
+        responseMimeType: "application/json",
+        temperature: 0.1
+      }
+    });
+
+    const text = response.text || "{}";
+    // Clean up potential markdown blocks if the model includes them despite responseMimeType
+    let jsonStr = text.replace(/```json\n?|\n?```/g, "").trim();
+    jsonStr = jsonStr.replace(/:\s*NaN/g, ': 0.90');
+
+    let result: any;
+    try {
+      result = JSON.parse(jsonStr);
+    } catch (e) {
+      console.error("JSON Parse Error. Raw text:", text);
+      // Fallback object to prevent crash
+      result = { 
+        confidence: 0.5, 
+        totalCost: 0, 
+        repairs: [], 
+        summary: "Ошибка обработки данных от AI. Попробуйте еще раз.",
+        carModel: "Не определено"
+      };
     }
     
-    message += `📝 *Заключение:* ${result.summary}\n`;
-    message += `_Примечание: ${result.notes || "Оценка предварительная. Детали оплачиваются отдельно."}_`;
-    
-    await ctx.replyWithMarkdown(message);
-  } catch (error) {
-    console.error(error);
-    await ctx.reply("Ошибка анализа. Пожалуйста, попробуйте еще раз.");
+    if (result.confidence === null || isNaN(result.confidence)) {
+      result.confidence = 0.90;
+    }
+
+    if (!result.repairs || !Array.isArray(result.repairs)) {
+      result.repairs = [];
+    }
+
+    return result;
+  } finally {
+    // Cleanup uploaded files
+    const currentApiKey = process.env.GEMINI_API_KEY || process.env.API_KEY || "";
+    const localAi = new GoogleGenAI({ apiKey: currentApiKey });
+    for (const fileName of uploadedFiles) {
+      try {
+        await localAi.files.delete({ name: fileName });
+      } catch (e) {
+        console.error(`Failed to delete file ${fileName}:`, e);
+      }
+    }
   }
 }
-
-bot.on(["photo", "video"], async (ctx) => {
-  const message = ctx.message as any;
-  const mediaGroupId = message.media_group_id;
-  let fileId = message.photo ? message.photo[message.photo.length - 1].file_id : message.video.file_id;
-  let mimeType = message.photo ? "image/jpeg" : (message.video.mime_type || "video/mp4");
-
-  const fileLink = await ctx.telegram.getFileLink(fileId);
-  const response = await axios.get(fileLink.toString(), { responseType: 'arraybuffer' });
-  const base64 = Buffer.from(response.data, 'binary').toString('base64');
-  const file = { data: base64, mimeType };
-
-  if (mediaGroupId) {
-    if (!mediaGroups.has(mediaGroupId)) mediaGroups.set(mediaGroupId, { files: [], timer: setTimeout(() => {}, 0) });
-    const group = mediaGroups.get(mediaGroupId)!;
-    group.files.push(file);
-    clearTimeout(group.timer);
-    group.timer = setTimeout(async () => {
-      await processMedia(ctx, group.files);
-      mediaGroups.delete(mediaGroupId);
-    }, 1500);
-  } else {
-    await processMedia(ctx, [file]);
-  }
-});
 
 async function startServer() {
   const app = express();
-  if (BOT_TOKEN) bot.launch().then(() => console.log("Bot started"));
+  app.set('trust proxy', 1);
+  app.use(cors());
+  app.use(express.json({ limit: '500mb' }));
+  app.use(express.urlencoded({ limit: '500mb', extended: true }));
+  
+  // Handle JSON parsing errors and payload too large
+  app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    if (err instanceof SyntaxError && 'status' in err && err.status === 400 && 'body' in err) {
+      return res.status(400).json({ error: "Invalid JSON payload" });
+    }
+    if (err.type === 'entity.too.large') {
+      return res.status(413).json({ error: "Payload too large. Please upload smaller files." });
+    }
+    next(err);
+  });
+  
+  // Apply rate limiters to API routes
+  app.use("/api/", apiLimiter);
+  app.use("/api/vin", vinLimiter);
+
+  // --- API Endpoints ---
+  
+  // VIN Decoder (Plan A / Plan B fallback)
+  app.get("/api/vin/:vin", async (req, res) => {
+    const { vin } = req.params;
+    if (vin.length !== 17) {
+      return res.status(400).json({ error: "Invalid VIN length. Must be 17 characters." });
+    }
+    
+    try {
+      const response = await fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValues/${vin}?format=json`);
+      if (!response.ok) throw new Error("Failed to fetch from NHTSA");
+      const data = await response.json();
+      
+      if (data.Results && data.Results.length > 0) {
+        const result = data.Results[0];
+        if (result.Make && result.Model) {
+          return res.json({
+            vin: vin.toUpperCase(),
+            make: result.Make,
+            model: result.Model,
+            year: result.ModelYear,
+            engine: result.DisplacementL ? `${result.DisplacementL}L` : "Unknown",
+            found: true
+          });
+        }
+      }
+      
+      // Fallback if NHTSA doesn't find it
+      res.json({
+        vin: vin.toUpperCase(),
+        make: "Unknown Make",
+        model: "Unknown Model",
+        year: "Unknown Year",
+        engine: "Unknown",
+        found: false
+      });
+    } catch (e) {
+      console.error("VIN decode error:", e);
+      res.status(500).json({ error: "Failed to decode VIN" });
+    }
+  });
+
+  // Real Parts Search via Gemini
+  app.post("/api/parts/search", async (req, res) => {
+    const { vin, partName, make, model, year } = req.body;
+    
+    if (!partName) {
+      return res.status(400).json({ error: "partName is required." });
+    }
+
+    try {
+      const vehicleInfo = [make, model, year, vin ? `VIN: ${vin}` : ''].filter(Boolean).join(' ');
+      
+      const prompt = `Find the auto part "${partName}" for vehicle: ${vehicleInfo}.
+      You MUST use Google Search to find the real OEM part number and real prices in the Czech Republic.
+      
+      1. Identify the correct OEM part number for this specific vehicle.
+      2. Find the Retail price (for the client) - this should be the price on LKQ (lkq.cz / autokelly.cz) without registration.
+      3. Find the Wholesale price (for the master) - this should be the price on Automedik (automedik.cz).
+      4. If you cannot find exact prices, use your internal catalog knowledge to estimate realistic CZK prices for this specific premium/standard vehicle.
+      5. Provide realistic search links based on the actual OEM part number you found:
+         - LKQ: https://www.lkq.cz/Search?q=[PART_NUMBER]
+         - Automedik: https://automedik.cz/autodily/hledani?search=[PART_NUMBER]
+         - RRR.lt: https://rrr.lt/en/search?q=[PART_NUMBER]
+
+      Return a JSON object with a "results" array containing these categories if applicable:
+      "new_original", "good_aftermarket", "average_aftermarket", "cheap_aftermarket", "used_original".
+
+      Format:
+      {
+        "partName": "The requested part name",
+        "results": [
+          {
+            "category": "new_original",
+            "name": "Brand - Part Name",
+            "partNumber": "OEM12345",
+            "retailPrice": 15000,
+            "wholesalePrice": 12000,
+            "link": "https://www.lkq.cz/Search?q=OEM12345"
+          }
+        ]
+      }`;
+
+      const currentApiKey = process.env.GEMINI_API_KEY || process.env.API_KEY || "";
+      const localAi = new GoogleGenAI({ apiKey: currentApiKey });
+
+      const response = await localAi.models.generateContent({
+        model: "gemini-3.1-pro-preview",
+        contents: prompt,
+        config: {
+          tools: [{ googleSearch: {} }],
+          responseMimeType: "application/json",
+          temperature: 0.2
+        }
+      });
+
+      const text = response.text || "{}";
+      const data = JSON.parse(text);
+
+      res.json({
+        partName,
+        vin,
+        results: data.results || []
+      });
+    } catch (e) {
+      console.error("Parts search error:", e);
+      // Fallback to a generic search link if API fails
+      res.json({
+        partName,
+        vin,
+        results: [
+          {
+            category: "new_original",
+            name: `Оригинал - ${partName}`,
+            partNumber: "Поиск...",
+            retailPrice: 5000,
+            wholesalePrice: 4000,
+            link: `https://www.lkq.cz/Search?q=${encodeURIComponent(partName)}`
+          }
+        ]
+      });
+    }
+  });
 
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({

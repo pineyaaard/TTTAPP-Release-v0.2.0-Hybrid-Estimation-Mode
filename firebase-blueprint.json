@@ -1,0 +1,90 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "A user of the application (Master/Admin).",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "format": "email" },
+        "role": { "type": "string", "enum": ["admin", "master"] },
+        "name": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "role", "createdAt"]
+    },
+    "Lead": {
+      "title": "Lead",
+      "description": "A customer request for repair or service.",
+      "type": "object",
+      "properties": {
+        "track": { "type": "string", "enum": ["body_shop", "service_station"] },
+        "source": { "type": "string", "enum": ["web", "telegram", "whatsapp"] },
+        "status": { "type": "string", "enum": ["new", "in_progress", "completed", "rejected"] },
+        "clientInfo": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "phone": { "type": "string" },
+            "telegramId": { "type": "string" }
+          }
+        },
+        "vehicleInfo": {
+          "type": "object",
+          "properties": {
+            "vin": { "type": "string" },
+            "make": { "type": "string" },
+            "model": { "type": "string" },
+            "year": { "type": "number" },
+            "manualEntry": { "type": "boolean" }
+          }
+        },
+        "requestDetails": {
+          "type": "object",
+          "properties": {
+            "description": { "type": "string" },
+            "photoUrls": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "estimation": {
+          "type": "object",
+          "properties": {
+            "laborCost": { "type": "number" },
+            "partsRetailCost": { "type": "number" },
+            "partsWholesaleCost": { "type": "number" },
+            "partsList": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "partNumber": { "type": "string" },
+                  "retailPrice": { "type": "number" },
+                  "wholesalePrice": { "type": "number" },
+                  "category": { "type": "string", "enum": ["new_original", "good_aftermarket", "average_aftermarket", "cheap_aftermarket", "used_original"] },
+                  "links": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "ipAddress": { "type": "string" }
+      },
+      "required": ["track", "source", "status", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Stores user profiles and roles."
+    },
+    "/leads/{leadId}": {
+      "schema": { "$ref": "#/entities/Lead" },
+      "description": "Stores customer leads and estimations."
+    }
+  }
+}

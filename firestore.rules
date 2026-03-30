@@ -1,0 +1,70 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && (
+        (request.auth.token.email == "pineyaaard@gmail.com" && request.auth.token.email_verified == true) ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+      );
+    }
+
+    function isMaster() {
+      return isAuthenticated() && (
+        isAdmin() ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'master')
+      );
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+    function isValidUser(data) {
+      return data.keys().hasAll(['email', 'role', 'createdAt']) &&
+             data.email is string &&
+             data.role in ['admin', 'master'] &&
+             data.createdAt is string;
+    }
+
+    function isValidLead(data) {
+      return data.keys().hasAll(['track', 'source', 'status', 'createdAt']) &&
+             data.track in ['body_shop', 'service_station'] &&
+             data.source in ['web', 'telegram', 'whatsapp'] &&
+             data.status in ['new', 'in_progress', 'completed', 'rejected'] &&
+             data.createdAt is string;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+    
+    match /users/{userId} {
+      // Only admins can create or update users, except users can read their own profile
+      allow read: if isOwner(userId) || isMaster();
+      allow create: if isAdmin() && isValidUser(request.resource.data);
+      allow update: if isAdmin() && isValidUser(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /leads/{leadId} {
+      // Anyone can create a lead (web form submission, telegram bot)
+      allow create: if isValidLead(request.resource.data);
+      
+      // Only masters and admins can read, update, or delete leads
+      allow read: if isMaster();
+      allow update: if isMaster() && isValidLead(request.resource.data);
+      allow delete: if isAdmin();
+    }
+  }
+}
