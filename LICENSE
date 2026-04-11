@@ -1,49 +1,41 @@
-PROPRIETARY SOFTWARE LICENSE AND TERMS OF USE
-================================================================================
+# PROPRIETARY SOFTWARE LICENSE AND TERMS OF USE
 
-Copyright (c) 2026 pineyardcz s.r.o
-Company ID (IČO) / VAT: 19264674
+**Copyright (c) 2026 pineyardcz s.r.o**
+**Company ID (IČO): 19264674 | VAT: CZ19264674**
+**Owner and Lead Developer: Pavel Dmitrevskij**
+**Contact: order@poletta.cz**
 
-Owner and Lead Developer: Pavel Dmitrevskij
-Contact: order@poletta.cz
+---
 
-ALL RIGHTS RESERVED.
+### ⚠️ ALL RIGHTS RESERVED. EXCLUSIVE PROPRIETARY PROPERTY. ⚠️
 
-1. PURPOSE AND SCOPE
-This source code, assets, and accompanying documentation (collectively, the 
-"Software") are provided exclusively for portfolio, educational, and 
-demonstration purposes. By accessing this repository, you agree to be bound 
-by the terms of this License.
+### 1. PURPOSE AND SCOPE
+This source code, including but not limited to AI prompts, mathematical heuristics, system instructions, logic flows, UI/UX assets, and accompanying documentation (collectively, the "Software"), is the exclusive property of **pineyardcz s.r.o**. The Software is provided in this repository for **PORTFOLIO DISPLAY AND DEMONSTRATION PURPOSES ONLY**. Access to this repository does NOT grant any rights to use, copy, or distribute the code.
 
-2. RESTRICTIONS
-You are strictly PROHIBITED from taking any of the following actions without 
-prior explicit, written permission from the copyright holder (pineyardcz s.r.o):
+### 2. STRICT PROHIBITIONS
+Any use of the Software not explicitly authorized in writing by **pineyardcz s.r.o** is a violation of international copyright laws and trade secret protections. You are strictly **PROHIBITED** from:
+* **Reproduction:** Copying, downloading, cloning, or mirroring the Software in any form.
+* **Derivation:** Modifying, altering, or creating derivative works based on the Software’s logic or code.
+* **Distribution:** Sharing, publishing, or sublicensing the Software to any third party.
+* **Commercial Use:** Utilizing the Software for any business purpose, including internal tools or SaaS development.
+* **Reverse Engineering:** Attempting to extract logic, proprietary AI prompts, or backend routing structures.
+* **AI Training:** Using any part of this Software to train, fine-tune, or prompt machine learning models (LLMs) or artificial intelligence systems.
 
-  * Copying, downloading, or reproducing the Software in any form.
-  * Modifying, altering, or creating derivative works based on the Software.
-  * Distributing, publishing, or sharing the Software with third parties.
-  * Using the Software for any commercial, enterprise, or non-commercial business purposes.
-  * Selling, renting, leasing, or sublicensing the Software.
-  * Reverse-engineering, decompiling, or extracting the source code for other projects.
-  * Scraping, copying, or using the Software to train machine learning models, 
-    large language models (LLMs), or artificial intelligence systems.
+### 3. TRADE SECRETS AND INTELLECTUAL PROPERTY
+The Software contains valuable trade secrets (specifically the "Prompt v3.0" logic and labor-hour heuristics) belonging to **pineyardcz s.r.o**. Viewing this code does not constitute a waiver of confidentiality. Any unauthorized use will be treated as misappropriation of trade secrets.
 
-3. OWNERSHIP
-pineyardcz s.r.o retains all rights, title, and interest in and to the Software, 
-including all intellectual property rights, trademarks, and trade secrets therein. 
-No license or right is granted to you by implication, estoppel, or otherwise. 
-Viewing this repository on GitHub does not constitute a waiver of any rights 
-held by the copyright owner.
+### 4. ENFORCEMENT AND REMEDIES
+In the event of unauthorized use or theft:
+1.  **Legal Action:** **pineyardcz s.r.o** will pursue civil and criminal penalties to the maximum extent permitted by law.
+2.  **Damages:** The violator shall be liable for actual damages, lost profits, and the cost of legal fees.
+3.  **DMCA:** We will immediately issue DMCA takedown notices to hosting providers and search engines.
 
-4. DISCLAIMER OF WARRANTY
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+### 5. GOVERNING LAW AND JURISDICTION
+This License shall be governed by and construed in accordance with the laws of the **Czech Republic**. Any legal proceedings arising from this License shall be conducted exclusively in the courts of **Prague, Czech Republic**.
 
-================================================================================
-For licensing inquiries, B2B integration, or commercial usage requests, 
-please contact the developer directly at: order@poletta.cz
+### 6. DISCLAIMER OF WARRANTY
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND. IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE.
+
+---
+**For licensing inquiries, B2B integration, or commercial usage requests, contact:**
+Pavel Dmitrevskij | order@poletta.cz | https://poletta.cz
