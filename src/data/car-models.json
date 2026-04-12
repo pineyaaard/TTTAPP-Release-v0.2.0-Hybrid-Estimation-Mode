@@ -1,0 +1,366 @@
+{
+  "skoda": {
+    "label": "Škoda",
+    "models": {
+      "fabia": { "label": "Fabia", "years": [1999, 2026] },
+      "octavia": { "label": "Octavia", "years": [1996, 2026] },
+      "superb": { "label": "Superb", "years": [2001, 2026] },
+      "rapid": { "label": "Rapid", "years": [2012, 2024] },
+      "scala": { "label": "Scala", "years": [2019, 2026] },
+      "kamiq": { "label": "Kamiq", "years": [2019, 2026] },
+      "karoq": { "label": "Karoq", "years": [2017, 2026] },
+      "kodiaq": { "label": "Kodiaq", "years": [2016, 2026] },
+      "enyaq": { "label": "Enyaq", "years": [2021, 2026] },
+      "roomster": { "label": "Roomster", "years": [2006, 2015] },
+      "yeti": { "label": "Yeti", "years": [2009, 2017] },
+      "citigo": { "label": "Citigo", "years": [2011, 2020] }
+    }
+  },
+  "vw": {
+    "label": "Volkswagen",
+    "models": {
+      "golf": { "label": "Golf", "years": [1997, 2026] },
+      "passat": { "label": "Passat", "years": [1996, 2026] },
+      "polo": { "label": "Polo", "years": [1999, 2026] },
+      "tiguan": { "label": "Tiguan", "years": [2007, 2026] },
+      "touran": { "label": "Touran", "years": [2003, 2026] },
+      "t-roc": { "label": "T-Roc", "years": [2017, 2026] },
+      "t-cross": { "label": "T-Cross", "years": [2018, 2026] },
+      "caddy": { "label": "Caddy", "years": [2003, 2026] },
+      "transporter": { "label": "Transporter", "years": [1990, 2026] },
+      "crafter": { "label": "Crafter", "years": [2006, 2026] },
+      "up": { "label": "Up!", "years": [2011, 2023] },
+      "jetta": { "label": "Jetta", "years": [2005, 2024] },
+      "sharan": { "label": "Sharan", "years": [2000, 2022] },
+      "arteon": { "label": "Arteon", "years": [2017, 2026] },
+      "id3": { "label": "ID.3", "years": [2020, 2026] },
+      "id4": { "label": "ID.4", "years": [2020, 2026] }
+    }
+  },
+  "ford": {
+    "label": "Ford",
+    "models": {
+      "focus": { "label": "Focus", "years": [1998, 2026] },
+      "fiesta": { "label": "Fiesta", "years": [2002, 2023] },
+      "mondeo": { "label": "Mondeo", "years": [2000, 2024] },
+      "kuga": { "label": "Kuga", "years": [2008, 2026] },
+      "puma": { "label": "Puma", "years": [2019, 2026] },
+      "transit": { "label": "Transit", "years": [1995, 2026] },
+      "transit-connect": { "label": "Transit Connect", "years": [2002, 2026] },
+      "ranger": { "label": "Ranger", "years": [2006, 2026] },
+      "s-max": { "label": "S-Max", "years": [2006, 2023] },
+      "galaxy": { "label": "Galaxy", "years": [2006, 2023] },
+      "ecosport": { "label": "EcoSport", "years": [2014, 2022] }
+    }
+  },
+  "hyundai": {
+    "label": "Hyundai",
+    "models": {
+      "i10": { "label": "i10", "years": [2008, 2026] },
+      "i20": { "label": "i20", "years": [2008, 2026] },
+      "i30": { "label": "i30", "years": [2007, 2026] },
+      "i40": { "label": "i40", "years": [2011, 2020] },
+      "tucson": { "label": "Tucson", "years": [2004, 2026] },
+      "kona": { "label": "Kona", "years": [2017, 2026] },
+      "santa-fe": { "label": "Santa Fe", "years": [2006, 2026] },
+      "ix20": { "label": "ix20", "years": [2010, 2019] },
+      "ix35": { "label": "ix35", "years": [2010, 2015] }
+    }
+  },
+  "kia": {
+    "label": "Kia",
+    "models": {
+      "ceed": { "label": "Ceed", "years": [2006, 2026] },
+      "sportage": { "label": "Sportage", "years": [2004, 2026] },
+      "rio": { "label": "Rio", "years": [2005, 2026] },
+      "picanto": { "label": "Picanto", "years": [2004, 2026] },
+      "stonic": { "label": "Stonic", "years": [2017, 2026] },
+      "niro": { "label": "Niro", "years": [2016, 2026] },
+      "sorento": { "label": "Sorento", "years": [2009, 2026] },
+      "venga": { "label": "Venga", "years": [2009, 2019] },
+      "xceed": { "label": "XCeed", "years": [2019, 2026] }
+    }
+  },
+  "toyota": {
+    "label": "Toyota",
+    "models": {
+      "yaris": { "label": "Yaris", "years": [1999, 2026] },
+      "corolla": { "label": "Corolla", "years": [2000, 2026] },
+      "auris": { "label": "Auris", "years": [2006, 2019] },
+      "rav4": { "label": "RAV4", "years": [2000, 2026] },
+      "c-hr": { "label": "C-HR", "years": [2016, 2026] },
+      "aygo": { "label": "Aygo", "years": [2005, 2023] },
+      "avensis": { "label": "Avensis", "years": [2003, 2018] },
+      "iq": { "label": "iQ", "years": [2008, 2015] },
+      "land-cruiser": { "label": "Land Cruiser", "years": [2003, 2026] },
+      "hilux": { "label": "Hilux", "years": [2005, 2026] },
+      "proace": { "label": "ProAce", "years": [2013, 2026] }
+    }
+  },
+  "bmw": {
+    "label": "BMW",
+    "models": {
+      "1": { "label": "Řada 1", "years": [2004, 2026] },
+      "2": { "label": "Řada 2", "years": [2014, 2026] },
+      "3": { "label": "Řada 3", "years": [1998, 2026] },
+      "4": { "label": "Řada 4", "years": [2013, 2026] },
+      "5": { "label": "Řada 5", "years": [2000, 2026] },
+      "x1": { "label": "X1", "years": [2009, 2026] },
+      "x3": { "label": "X3", "years": [2003, 2026] },
+      "x5": { "label": "X5", "years": [2000, 2026] }
+    }
+  },
+  "mercedes": {
+    "label": "Mercedes-Benz",
+    "models": {
+      "a": { "label": "A-Klasse", "years": [2004, 2026] },
+      "b": { "label": "B-Klasse", "years": [2005, 2026] },
+      "c": { "label": "C-Klasse", "years": [2000, 2026] },
+      "e": { "label": "E-Klasse", "years": [2002, 2026] },
+      "glc": { "label": "GLC", "years": [2015, 2026] },
+      "gla": { "label": "GLA", "years": [2013, 2026] },
+      "sprinter": { "label": "Sprinter", "years": [2000, 2026] },
+      "vito": { "label": "Vito", "years": [2003, 2026] }
+    }
+  },
+  "audi": {
+    "label": "Audi",
+    "models": {
+      "a3": { "label": "A3", "years": [2003, 2026] },
+      "a4": { "label": "A4", "years": [2000, 2026] },
+      "a6": { "label": "A6", "years": [2004, 2026] },
+      "a8": { "label": "A8", "years": [2002, 2026] },
+      "q3": { "label": "Q3", "years": [2011, 2026] },
+      "q5": { "label": "Q5", "years": [2008, 2026] },
+      "q7": { "label": "Q7", "years": [2005, 2026] }
+    }
+  },
+  "opel": {
+    "label": "Opel",
+    "models": {
+      "astra": { "label": "Astra", "years": [1998, 2026] },
+      "corsa": { "label": "Corsa", "years": [2000, 2026] },
+      "insignia": { "label": "Insignia", "years": [2008, 2024] },
+      "mokka": { "label": "Mokka", "years": [2012, 2026] },
+      "crossland": { "label": "Crossland", "years": [2017, 2026] },
+      "grandland": { "label": "Grandland", "years": [2017, 2026] },
+      "zafira": { "label": "Zafira", "years": [2005, 2019] },
+      "meriva": { "label": "Meriva", "years": [2003, 2017] },
+      "vivaro": { "label": "Vivaro", "years": [2001, 2026] }
+    }
+  },
+  "renault": {
+    "label": "Renault",
+    "models": {
+      "clio": { "label": "Clio", "years": [2005, 2026] },
+      "megane": { "label": "Megane", "years": [2002, 2026] },
+      "scenic": { "label": "Scenic", "years": [2003, 2024] },
+      "captur": { "label": "Captur", "years": [2013, 2026] },
+      "kadjar": { "label": "Kadjar", "years": [2015, 2022] },
+      "kangoo": { "label": "Kangoo", "years": [2003, 2026] },
+      "master": { "label": "Master", "years": [2003, 2026] },
+      "trafic": { "label": "Trafic", "years": [2001, 2026] }
+    }
+  },
+  "peugeot": {
+    "label": "Peugeot",
+    "models": {
+      "208": { "label": "208", "years": [2012, 2026] },
+      "308": { "label": "308", "years": [2007, 2026] },
+      "3008": { "label": "3008", "years": [2009, 2026] },
+      "5008": { "label": "5008", "years": [2009, 2026] },
+      "2008": { "label": "2008", "years": [2013, 2026] },
+      "partner": { "label": "Partner / Rifter", "years": [2002, 2026] },
+      "boxer": { "label": "Boxer", "years": [2006, 2026] }
+    }
+  },
+  "citroen": {
+    "label": "Citroën",
+    "models": {
+      "c3": { "label": "C3", "years": [2002, 2026] },
+      "c4": { "label": "C4", "years": [2004, 2026] },
+      "c5-aircross": { "label": "C5 Aircross", "years": [2018, 2026] },
+      "berlingo": { "label": "Berlingo", "years": [2002, 2026] },
+      "jumper": { "label": "Jumper", "years": [2006, 2026] },
+      "jumpy": { "label": "Jumpy", "years": [2007, 2026] }
+    }
+  },
+  "dacia": {
+    "label": "Dacia",
+    "models": {
+      "duster": { "label": "Duster", "years": [2010, 2026] },
+      "sandero": { "label": "Sandero", "years": [2008, 2026] },
+      "logan": { "label": "Logan", "years": [2004, 2026] },
+      "jogger": { "label": "Jogger", "years": [2022, 2026] },
+      "spring": { "label": "Spring", "years": [2021, 2026] },
+      "dokker": { "label": "Dokker", "years": [2012, 2021] }
+    }
+  },
+  "fiat": {
+    "label": "Fiat",
+    "models": {
+      "500": { "label": "500", "years": [2007, 2026] },
+      "panda": { "label": "Panda", "years": [2003, 2026] },
+      "punto": { "label": "Punto", "years": [2005, 2018] },
+      "tipo": { "label": "Tipo", "years": [2015, 2026] },
+      "ducato": { "label": "Ducato", "years": [2002, 2026] },
+      "doblo": { "label": "Doblo", "years": [2005, 2022] }
+    }
+  },
+  "volvo": {
+    "label": "Volvo",
+    "models": {
+      "v40": { "label": "V40", "years": [2012, 2019] },
+      "v60": { "label": "V60", "years": [2010, 2026] },
+      "v90": { "label": "V90", "years": [2016, 2026] },
+      "xc40": { "label": "XC40", "years": [2017, 2026] },
+      "xc60": { "label": "XC60", "years": [2008, 2026] },
+      "xc90": { "label": "XC90", "years": [2002, 2026] },
+      "s60": { "label": "S60", "years": [2010, 2026] }
+    }
+  },
+  "seat": {
+    "label": "SEAT",
+    "models": {
+      "ibiza": { "label": "Ibiza", "years": [2002, 2026] },
+      "leon": { "label": "Leon", "years": [2005, 2026] },
+      "ateca": { "label": "Ateca", "years": [2016, 2026] },
+      "arona": { "label": "Arona", "years": [2017, 2026] },
+      "alhambra": { "label": "Alhambra", "years": [2010, 2020] }
+    }
+  },
+  "mazda": {
+    "label": "Mazda",
+    "models": {
+      "3": { "label": "3", "years": [2003, 2026] },
+      "6": { "label": "6", "years": [2002, 2026] },
+      "cx-3": { "label": "CX-3", "years": [2015, 2026] },
+      "cx-5": { "label": "CX-5", "years": [2012, 2026] },
+      "cx-30": { "label": "CX-30", "years": [2019, 2026] },
+      "mx-5": { "label": "MX-5", "years": [2005, 2026] }
+    }
+  },
+  "nissan": {
+    "label": "Nissan",
+    "models": {
+      "qashqai": { "label": "Qashqai", "years": [2006, 2026] },
+      "juke": { "label": "Juke", "years": [2010, 2026] },
+      "micra": { "label": "Micra", "years": [2003, 2026] },
+      "x-trail": { "label": "X-Trail", "years": [2001, 2026] },
+      "note": { "label": "Note", "years": [2005, 2020] },
+      "leaf": { "label": "Leaf", "years": [2010, 2026] },
+      "nv200": { "label": "NV200", "years": [2009, 2026] }
+    }
+  },
+  "suzuki": {
+    "label": "Suzuki",
+    "models": {
+      "swift": { "label": "Swift", "years": [2005, 2026] },
+      "vitara": { "label": "Vitara", "years": [2015, 2026] },
+      "sx4": { "label": "SX4 S-Cross", "years": [2006, 2026] },
+      "jimny": { "label": "Jimny", "years": [1998, 2026] },
+      "ignis": { "label": "Ignis", "years": [2016, 2026] }
+    }
+  },
+  "mitsubishi": {
+    "label": "Mitsubishi",
+    "models": {
+      "outlander": { "label": "Outlander", "years": [2003, 2026] },
+      "asx": { "label": "ASX", "years": [2010, 2026] },
+      "space-star": { "label": "Space Star", "years": [2012, 2026] },
+      "l200": { "label": "L200", "years": [2006, 2026] },
+      "eclipse-cross": { "label": "Eclipse Cross", "years": [2017, 2026] }
+    }
+  },
+  "honda": {
+    "label": "Honda",
+    "models": {
+      "civic": { "label": "Civic", "years": [2001, 2026] },
+      "cr-v": { "label": "CR-V", "years": [2002, 2026] },
+      "hr-v": { "label": "HR-V", "years": [2015, 2026] },
+      "jazz": { "label": "Jazz", "years": [2002, 2024] }
+    }
+  },
+  "chevrolet": {
+    "label": "Chevrolet",
+    "models": {
+      "cruze": { "label": "Cruze", "years": [2009, 2016] },
+      "spark": { "label": "Spark", "years": [2009, 2016] },
+      "aveo": { "label": "Aveo", "years": [2006, 2016] },
+      "orlando": { "label": "Orlando", "years": [2010, 2018] },
+      "captiva": { "label": "Captiva", "years": [2006, 2018] }
+    }
+  },
+  "lexus": {
+    "label": "Lexus",
+    "models": {
+      "is": { "label": "IS", "years": [2005, 2026] },
+      "nx": { "label": "NX", "years": [2014, 2026] },
+      "rx": { "label": "RX", "years": [2003, 2026] },
+      "ux": { "label": "UX", "years": [2018, 2026] }
+    }
+  },
+  "porsche": {
+    "label": "Porsche",
+    "models": {
+      "cayenne": { "label": "Cayenne", "years": [2002, 2026] },
+      "macan": { "label": "Macan", "years": [2014, 2026] },
+      "911": { "label": "911", "years": [1997, 2026] },
+      "panamera": { "label": "Panamera", "years": [2009, 2026] },
+      "taycan": { "label": "Taycan", "years": [2019, 2026] }
+    }
+  },
+  "land-rover": {
+    "label": "Land Rover",
+    "models": {
+      "discovery": { "label": "Discovery", "years": [2004, 2026] },
+      "discovery-sport": { "label": "Discovery Sport", "years": [2014, 2026] },
+      "range-rover": { "label": "Range Rover", "years": [2002, 2026] },
+      "range-rover-sport": { "label": "Range Rover Sport", "years": [2005, 2026] },
+      "range-rover-evoque": { "label": "Evoque", "years": [2011, 2026] },
+      "defender": { "label": "Defender", "years": [2020, 2026] },
+      "freelander": { "label": "Freelander", "years": [2006, 2014] }
+    }
+  },
+  "tesla": {
+    "label": "Tesla",
+    "models": {
+      "model-3": { "label": "Model 3", "years": [2017, 2026] },
+      "model-y": { "label": "Model Y", "years": [2020, 2026] },
+      "model-s": { "label": "Model S", "years": [2012, 2026] },
+      "model-x": { "label": "Model X", "years": [2015, 2026] }
+    }
+  },
+  "jaguar": {
+    "label": "Jaguar",
+    "models": {
+      "xe": { "label": "XE", "years": [2015, 2026] },
+      "xf": { "label": "XF", "years": [2008, 2026] },
+      "f-pace": { "label": "F-Pace", "years": [2016, 2026] },
+      "e-pace": { "label": "E-Pace", "years": [2017, 2026] }
+    }
+  },
+  "alfa-romeo": {
+    "label": "Alfa Romeo",
+    "models": {
+      "giulietta": { "label": "Giulietta", "years": [2010, 2020] },
+      "giulia": { "label": "Giulia", "years": [2016, 2026] },
+      "stelvio": { "label": "Stelvio", "years": [2017, 2026] }
+    }
+  },
+  "mini": {
+    "label": "MINI",
+    "models": {
+      "cooper": { "label": "Cooper", "years": [2001, 2026] },
+      "countryman": { "label": "Countryman", "years": [2010, 2026] },
+      "clubman": { "label": "Clubman", "years": [2007, 2026] }
+    }
+  },
+  "smart": {
+    "label": "Smart",
+    "models": {
+      "fortwo": { "label": "ForTwo", "years": [1998, 2024] },
+      "forfour": { "label": "ForFour", "years": [2014, 2024] }
+    }
+  }
+}
